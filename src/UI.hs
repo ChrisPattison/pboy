@@ -9,7 +9,6 @@ import           Control.Monad.IO.Class (liftIO)
 import           Data.Function ((&))
 import           Data.List (intercalate)
 import           Data.Monoid ((<>))
-import           Data.Maybe
 
 import           Brick
 import qualified Brick.Focus as F
@@ -189,10 +188,10 @@ drawUI s =
         focus = F.focusGetCurrent (s ^. focusRing)
 
         inboxWidget =
-            L.renderList (drawFileInfo (s ^. config . Config.libraryDir)) (focus == Just Inbox) (s ^. inbox)
+            L.renderList drawFileInfo (focus == Just Inbox) (s ^. inbox)
 
         libraryWidget =
-            L.renderList (drawFileInfo (s ^. config . Config.libraryDir)) (focus == Just Library) (s ^. library)
+            L.renderList drawFileInfo (focus == Just Library) (s ^. library)
 
         inboxDirs = s ^. config . Config.inboxDirs
 
@@ -449,7 +448,7 @@ beginFileImport :: State -> Lib.FileInfo -> EventM ResourceName (Next State)
 beginFileImport s fileInfo = do
     let originalFile = Lib._fileName fileInfo
 
-    fileNameSuggestions <- liftIO $ Lib.fileNameSuggestions originalFile
+    fileNameSuggestions <- liftIO $ Lib.fileNameSuggestions fileInfo
 
     let
         fi =
@@ -474,12 +473,12 @@ beginFileImport s fileInfo = do
 --
 
 
-drawFileInfo :: Path Abs Dir -> Bool -> Lib.FileInfo -> Widget ResourceName
-drawFileInfo relDir _ fileInfo =
+drawFileInfo :: Bool -> Lib.FileInfo -> Widget ResourceName
+drawFileInfo _ fileInfo =
     let
         fileLabel =
-            [ let fn = Lib._fileName fileInfo in 
-                str (Path.fromRelFile $ fromMaybe (Path.filename $ fn) (Path.stripProperPrefix relDir fn))
+            [
+                str $ Path.fromRelFile $ Lib.relFilePath fileInfo
             , fill ' '
             , str (Time.showGregorian . Time.utctDay $ Lib._modTime fileInfo)
             ]

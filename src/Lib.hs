@@ -25,7 +25,7 @@ import           Data.Text.Titlecase (titlecase)
 import           Data.Time.Clock (UTCTime)
 import           GHC.Exts (sortWith)
 import           Lens.Micro ((^.))
-import           Path (Abs, Dir, File, Path, Abs, Rel, (</>))
+import           Path (Abs, Dir, File, Path, Abs, Rel, (</>), (-<.>))
 import qualified Path
 import qualified Path.IO as Path
 import qualified System.FilePath as F

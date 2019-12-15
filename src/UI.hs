@@ -9,6 +9,7 @@ import           Control.Monad.IO.Class (liftIO)
 import           Data.Function ((&))
 import           Data.List (intercalate)
 import           Data.Monoid ((<>))
+import           Data.Maybe
 
 import           Brick
 import qualified Brick.Focus as F
@@ -27,7 +28,7 @@ import qualified Data.Vector as Vec
 import qualified Graphics.Vty as V
 import           Lens.Micro ((%~), (.~), (?~), (^.))
 import           Lens.Micro.TH (makeLenses)
-import           Path (Abs, File, Path)
+import           Path (Abs, File, Dir, Path, (</>))
 import qualified Path
 
 import qualified Config
@@ -199,10 +200,10 @@ drawUI s =
         focus = F.focusGetCurrent (s ^. focusRing)
 
         inboxWidget =
-            L.renderList drawFileInfo (focus == Just Inbox) (s ^. inbox)
+            L.renderList (drawFileInfo (s ^. config . Config.libraryDir)) (focus == Just Inbox) (s ^. inbox)
 
         libraryWidget =
-            L.renderList drawFileInfo (focus == Just Library) (s ^. library)
+            L.renderList (drawFileInfo (s ^. config . Config.libraryDir)) (focus == Just Library) (s ^. library)
 
         inboxDirs = s ^. config . Config.inboxDirs
 
@@ -492,11 +493,12 @@ beginFileImport s fileInfo = do
 --
 
 
-drawFileInfo :: Bool -> Lib.FileInfo -> Widget ResourceName
-drawFileInfo _ fileInfo =
+drawFileInfo :: Path Abs Dir -> Bool -> Lib.FileInfo -> Widget ResourceName
+drawFileInfo relDir _ fileInfo =
     let
         fileLabel =
-            [ str (Path.fromRelFile $ Path.filename $ Lib._fileName fileInfo)
+            [ let fn = Lib._fileName fileInfo in 
+                str (Path.fromRelFile $ fromMaybe (Path.filename $ fn) (Path.stripProperPrefix relDir fn))
             , fill ' '
             , str (Time.showGregorian . Time.utctDay $ Lib._modTime fileInfo)
             ]

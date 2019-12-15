@@ -55,16 +55,6 @@ sortFileInfoByDate fileInfos =
     reverse $ sortWith _modTime fileInfos
 
 
-sortFileInfoByName :: [FileInfo] -> [FileInfo]
-sortFileInfoByName fileInfos =
-    reverse $ sortWith _fileName fileInfos
-
-
-sortFileInfo :: SortType -> [FileInfo] -> [FileInfo]
-sortFileInfo SortDate = sortFileInfoByDate
-sortFileInfo SortName = sortFileInfoByName
-
-
 getFileInfo :: Path Abs Dir -> Path Abs File -> IO FileInfo
 getFileInfo baseDir path = do
     modTime <- Path.getModificationTime path
@@ -109,7 +99,7 @@ fileNameSuggestions fileInfo = do
                 & List.nub
                 & take 5
 
-    pure (T.pack $ Path.fromRelFile (relFilePath fileInfo), suggestions)
+    pure (T.pack $ Path.fromRelFile $ Maybe.fromJust ((relFilePath fileInfo) -<.> ""), suggestions)
 
 
 getTopLines :: Path Abs File -> IO [Text]
@@ -178,8 +168,8 @@ finalFileName conf text =
 fileFile :: Config -> Text -> Path Abs File -> IO ()
 fileFile conf newFileName file = do
     newFile <- Path.parseRelFile (T.unpack newFileName <> Path.fileExtension file)
-    _ <- Path.ensureDir (Path.parent newFile)
     let newFilePath = (conf ^. Config.libraryDir) </> newFile
+    _ <- Path.ensureDir (Path.parent newFilePath)
 
     case conf ^. Config.importAction of
         Config.Copy -> Path.copyFile file newFilePath

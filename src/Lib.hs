@@ -179,11 +179,9 @@ finalFileName conf text =
 
 fileFile :: Config -> Text -> Path Abs File -> IO ()
 fileFile conf newFileName file = do
-    _ <- Path.ensureDir (conf ^. Config.libraryDir)
     newFile <- Path.parseRelFile (T.unpack newFileName <> Path.fileExtension file)
-    let
-        newFilePath =
-            (conf ^. Config.libraryDir) </> newFile
+    _ <- Path.ensureDir (Path.parent newFile)
+    let newFilePath = (conf ^. Config.libraryDir) </> newFile
 
     case conf ^. Config.importAction of
         Config.Copy -> Path.copyFile file newFilePath
